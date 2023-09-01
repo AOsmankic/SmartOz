@@ -9,6 +9,9 @@
 // }
 
 void s2lp_tx_packet(int fd, s2lp_packet_t *packet) {
+    // If in Tx or Rx, abort
+    s2lp_command(fd, S2LP_CMD_SABORT);
+    
     // Set the tx packet length
     uint8_t length_msb = (packet->payload_length >> 8);
     uint8_t length_lsb = (packet->payload_length & 0x00FF);
@@ -28,6 +31,9 @@ void s2lp_tx_packet(int fd, s2lp_packet_t *packet) {
 }
 
 void s2lp_rx_packet(int fd, s2lp_packet_t *packet) {
+    // If in Tx or Rx, abort
+    s2lp_command(fd, S2LP_CMD_SABORT);
+
     // If the packet should be variable length, set the S2LP accordingly.
     uint8_t pckt_ctrl = s2lp_readreg(fd, S2LP_PCKT_CTRL_2_REG);
     pckt_ctrl = pckt_ctrl | (packet->variable_length & 0x01);

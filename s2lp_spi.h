@@ -29,6 +29,7 @@
 #define S2LP_CMD_RX 0x61
 #define S2LP_CMD_FLUSHTXFIFO 0x72
 #define S2LP_CMD_FLUSHRXFIFO 0x71
+#define S2LP_CMD_SABORT 0x67
 
 uint8_t s2lp_readreg(int fd, uint8_t addr);
 void s2lp_writereg(int fd, uint8_t addr, uint8_t data[], uint8_t nBytes);

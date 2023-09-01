@@ -65,7 +65,7 @@ int main(int argc, char *argv[]) {
   tmp[1] = 0x01; /* reg. PA_CONFIG1 (0x63) */
   S2LPSpiWriteRegisters(fd_SPI, 0x62, 2, tmp);
         // END IMPORTED
-
+    
     uint8_t spiBufTx[7] = {0x01, 0x30, 0xFF, 0xFF, 0xBB, 0xCC, 0xAA};
     uint8_t spiBufRx[7];
     uint8_t addr = 0x8E;

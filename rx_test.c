@@ -146,6 +146,7 @@ int main(int argc, char *argv[]) {
         uint8_t data[128];
         rx_packet.payload = data;
 
+        printf("Current State: 0x%X\n", s2lp_readreg(fd_SPI, 0x8E) >> 1);
         // Receive packet
         s2lp_rx_packet(fd_SPI, &rx_packet);
 
