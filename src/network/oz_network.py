@@ -1,4 +1,12 @@
+import enum
+import json
 import uuid
+import hashlib
+from typing import Optional, Union
+from network_utils import generate_sha1_hash_digest
+
+MAX_PACKET_LENGTH = 65535
+
 
 class NeighborNode:
     node_id = ""
@@ -15,15 +23,14 @@ def is_for_me():
 
 
 
+
 class OzNetwork:
     network_id = None
     network_nodes = []
-
-
+    unique_id = None
 
     def __init__(self):
         ""
-
 
 
     def get_available_id(self):
@@ -37,6 +44,27 @@ class OzNetwork:
     def construct_full_view(self):
         "Get all nodes"
 
+
+
+class OzPacket:
+    def __init__(self):
+        pass
+
+    def to_dict(self):
+        return self.__dict__.copy()
+
+    def to_json(self):
+        return json.dumps(self.to_dict())
+
+    def from_dict(self, data: dict):
+        self.__dict__ = data.copy()
+
+    def from_json(self, data: str):
+        data_dict = json.loads(data)
+        self.from_dict(data_dict)
+
+    def _generate_hash_of_data(self):
+        return generate_sha1_hash_digest(self.data)
 
 class NetworkPacket:
     packet_id = ""
@@ -54,32 +82,22 @@ class NetworkPacket:
         ""
 
 
-class NetworkDataPacket:
-    data_size = -1
-    def __init__(self):
-        ""
 
-    def generate_hash_of_data(self):
-        ""
-
-    def get_data_info(self):
-        ""
-
-
-class DiscoveryDataPacket(NetworkDataPacket):
+class DiscoveryDataPacket(ApplicationDataPacket):
     def __init__(self):
         ""
         super().__init__()
 
 
-class ExternalRequestDataPacket(NetworkDataPacket):
+class ExternalRequestDataPacket(ApplicationDataPacket):
     def __init__(self):
         super().__init__()
 
 
-class StatusUpdateDataPacket(NetworkDataPacket):
+class StatusUpdateDataPacket(ApplicationDataPacket):
     def __init__(self):
         super().__init__()
 
 
-
+class PacketException(Exception):
+    pass
