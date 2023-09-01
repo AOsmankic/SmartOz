@@ -93,6 +93,8 @@ int main(int argc, char *argv[]) {
     // }
 
     int testCnt = 20;
+
+    
     for (int i = 1; i <= testCnt; i++) {
         s2lp_command(fd_SPI, S2LP_CMD_FLUSHTXFIFO);
 
@@ -102,11 +104,12 @@ int main(int argc, char *argv[]) {
         
         s2lp_packet_t tx_packet;
         tx_packet.payload = msg;
-        tx_packet.payload_length = sizeof(msg) / sizeof(msg[0]);
+        tx_packet.payload_length = size +1;
 
         s2lp_tx_packet(fd_SPI, &tx_packet);
 
-        printf("%s\n", msg);
+        printf("Sending payload: \"%s\"\n", msg);
+        printf("The payload size is: %d. snprintf said %d\n", tx_packet.payload_length, size);
 
         usleep(1*1000*1000);
     }

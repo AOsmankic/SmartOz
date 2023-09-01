@@ -15,10 +15,15 @@ void s2lp_tx_packet(int fd, s2lp_packet_t *packet) {
     s2lp_writereg(fd, S2LP_PCKT_LEN_MSB, &length_msb, 1);
     s2lp_writereg(fd, S2LP_PCKT_LEN_LSB, &length_lsb, 1);
 
-    // Write data to the FIFO
-    s2lp_writefifo(fd, packet->payload, packet->payload_length);
+    printf("MSB: %d, LSB: %d\n", s2lp_readreg(fd, S2LP_PCKT_LEN_MSB), s2lp_readreg(fd, S2LP_PCKT_LEN_LSB));
 
+    // Write data to the FIFO
+    printf("TX FIFO Size: %d\n", s2lp_txfifo_count(fd));
+    printf("Payload Addr: %d\n", packet->payload);
+    s2lp_writefifo(fd, packet->payload, packet->payload_length);
+    printf("TX FIFO Size: %d\n", s2lp_txfifo_count(fd));
     // Enter TX mode
+    printf("TX FIFO Size: %d\n", s2lp_txfifo_count(fd));
     s2lp_command(fd, S2LP_CMD_TX);
 }
 
