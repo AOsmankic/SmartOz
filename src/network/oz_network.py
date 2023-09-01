@@ -83,20 +83,20 @@ class NetworkPacket:
 
 
 
-class DiscoveryDataPacket(ApplicationDataPacket):
-    def __init__(self):
-        ""
-        super().__init__()
-
-
-class ExternalRequestDataPacket(ApplicationDataPacket):
-    def __init__(self):
-        super().__init__()
-
-
-class StatusUpdateDataPacket(ApplicationDataPacket):
-    def __init__(self):
-        super().__init__()
+# class DiscoveryDataPacket(ApplicationDataPacket):
+#     def __init__(self):
+#         ""
+#         super().__init__()
+#
+#
+# class ExternalRequestDataPacket(ApplicationDataPacket):
+#     def __init__(self):
+#         super().__init__()
+#
+#
+# class StatusUpdateDataPacket(ApplicationDataPacket):
+#     def __init__(self):
+#         super().__init__()
 
 
 class PacketException(Exception):

@@ -1,6 +1,7 @@
+import sys
 from enum import Enum
 from typing import Optional, Union, Dict
-from network_utils import pad_bytes
+from network_utils import pad_bytes, bytes_to_ints
 from oz_network import OzPacket, PacketException, OzNetwork
 import logging
 logger = logging.getLogger("ozNetwork")
@@ -25,19 +26,20 @@ def transport_layer_retrieval_handler(data: bytes, oz_network: OzNetwork):
 def transport_layer_transmit_handler():
     ""
 
+
 class NetworkPathTypes(int, Enum):
-    DISCOVER_NETWORK: 0  # Discover network.
-    DISCOVER_NEIGHBORS: 1  # Discover network neighbors
-    DISCOVER_ROUTE: 2
-    ROUTE: 3
-    REREQUEST: 4
+    DISCOVER_NETWORK = 0  # Discover network.
+    DISCOVER_NEIGHBORS = 1  # Discover network neighbors
+    DISCOVER_ROUTE = 2
+    ROUTE = 3
+    REREQUEST = 4
 
 
 
 class TransportLayerPacket(OzPacket):
     def __init__(
             self,
-            packet_json: Optional[Union[Dict, str, bytes]],
+            packet_json: Optional[Union[Dict, str, bytes]] = None,
             *,
             packet_type: NetworkPathTypes = None,
             data: str = None,
@@ -52,7 +54,7 @@ class TransportLayerPacket(OzPacket):
         if packet_json:
             if isinstance(packet_json, dict):
                 self.from_dict(packet_json)
-            elif isinstance(packet_json, bytes):
+            elif isinstance(packet_json, list):
                 self.from_bytes(packet_json)
             else:
                 self.from_json(packet_json)
@@ -68,31 +70,32 @@ class TransportLayerPacket(OzPacket):
         self.packet_id = packet_id
         self.checksum = super()._generate_hash_of_data()
 
-    def from_bytes(self, data: bytes):
-        self.source = data[0:16].decode()
-        self.dest = data[16:32].decode()
-        self.data_len = int.from_bytes(data[32:34])
-        self.packet_type = int.from_bytes(data[34:35])
-        self.packet_id = int.from_bytes(data[35:37])
-        self.packet_num = int.from_bytes(data[37:39])
-        self.num_of_packets = int.from_bytes(data[39:41])
-        self.checksum = data[41:61].decode
-        self.data = data[61:].decode()
+    def from_bytes(self, data: list[int]):
+        self.source = bytes(data[0:16]).decode()
+        self.dest = bytes(data[16:32]).decode()
+        self.data_len = int.from_bytes(bytes(data[32:34]), sys.byteorder)
+        self.packet_type = int.from_bytes(bytes(data[34:35]), sys.byteorder)
+        self.packet_id = int.from_bytes(bytes(data[35:37]), sys.byteorder)
+        self.packet_num = int.from_bytes(bytes(data[37:39]), sys.byteorder)
+        self.num_of_packets = int.from_bytes(bytes(data[39:41]), sys.byteorder)
+        self.checksum = bytes(data[41:61]).decode()
+        self.data = bytes(data[81:]).decode()
 
     def to_bytes(self):
-        final_str = [
-            f"{pad_bytes(bytes(self.source, 'utf-8'), 16)}",
-            f"{pad_bytes(bytes(self.dest, 'utf-8'), 16)}",
-            f"{pad_bytes(self.data_len.to_bytes(), 16)}",
-            f"{pad_bytes(self.packet_type.to_bytes(), 16)}",
-            f"{pad_bytes(self.packet_id.to_bytes(), 16)}",
-            f"{pad_bytes(self.packet_num.to_bytes(), 16)}",
-            f"{pad_bytes(self.num_of_packets.to_bytes(), 16)}",
-            f"{pad_bytes(bytes(self.checksum, 'utf-8'), 16)}",
-            f"{self.data}"
-        ]
-        final_str = "".join(final_str)
-        return bytes(final_str, "utf-8")
+        final_bytes = pad_bytes(bytes(self.source, 'utf-8'), 16)
+        final_bytes.extend(pad_bytes(bytes(self.dest, 'utf-8'), 16))
+        final_bytes.extend(bytes_to_ints(self.data_len.to_bytes(2, sys.byteorder)))
+        final_bytes.extend(bytes_to_ints(self.packet_type.to_bytes(1, sys.byteorder)))
+        final_bytes.extend(bytes_to_ints(self.packet_id.to_bytes(2, sys.byteorder)))
+        final_bytes.extend(bytes_to_ints(self.packet_num.to_bytes(2, sys.byteorder)))
+        final_bytes.extend(bytes_to_ints(self.num_of_packets.to_bytes(2, sys.byteorder)))
+        final_bytes.extend(pad_bytes(bytes(self.checksum, 'utf-8'), 20))
+        final_bytes.extend(bytes_to_ints(bytes(self.data, 'utf-8')))
+        final_array = []
+        for byte in final_bytes:
+            final_array.append(byte)
+
+        return final_array
 
     def validate_packet_integrity(self):
         """

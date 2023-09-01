@@ -2,7 +2,7 @@ from oz_network import PacketException
 from typing import Optional, Union
 import json
 from oz_network import MAX_PACKET_LENGTH, OzPacket
-from network_utils import pad_bytes, generate_sha1_hash_digest
+from network_utils import pad_bytes, generate_sha1_hash_digest, bytes_to_ints
 from enum import Enum
 
 
@@ -10,7 +10,13 @@ APP_PACKET_HEADER_LENGTH = 23
 
 
 class ApplicationDataPacket(OzPacket):
-    def __init__(self, packet_json: Optional[Union[dict, str]] = None, *, packet_type: "ApplicationDataPacketTypes", data: str):
+    def __init__(
+            self,
+            packet_json: Optional[Union[dict, str]] = None,
+            *,
+            packet_type: "ApplicationDataPacketTypes" = None,
+            data: str = None
+    ):
         super().__init__()
         if packet_json:
             if isinstance(packet_json, dict):
@@ -19,7 +25,7 @@ class ApplicationDataPacket(OzPacket):
                 self.from_json(packet_json)
             self.validate_packet()
             return
-        self.application_data_type = packet_type
+        self.application_data_type = packet_type.value
         self.data = data
         self.data_len = len(self.data)
         self.checksum = self._generate_hash_of_data()
@@ -50,14 +56,14 @@ class ApplicationDataPacket(OzPacket):
         Convert packet to bytes and pad headers as needed
         :return: bytes representing the packet
         """
-        final_str = [
-            f"{pad_bytes(self.application_data_type.value.to_bytes(), 1).decode()}",
-            f"{pad_bytes(self.data_len.to_bytes(), 2).decode()}",
-            f"{pad_bytes(bytes(self.checksum, 'utf-8'), 20)}",
-            f"{self.data}"
-        ]
-        final_str = "".join(final_str)
-        return bytes(final_str, "utf-8")
+        byte_array = []
+
+        byte_array.extend(bytes_to_ints(self.application_data_type.to_bytes(1, 'big')))
+        byte_array.extend(bytes_to_ints(self.data_len.to_bytes(2, 'big')))
+        byte_array.extend(pad_bytes(bytes(self.checksum, 'utf-8'), 40))
+        byte_array.extend(bytes_to_ints(bytes(self.data, 'utf-8')))
+
+        return byte_array
 
 
 class ApplicationDataPacketTypes(Enum):
