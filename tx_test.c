@@ -38,38 +38,32 @@ int main(int argc, char *argv[]) {
     // BEGIN IMPORTED
     uint8_t tmp[5];
 
-    tmp[0] = 0x46; /* reg. SYNT2 (0x06) */
-    tmp[1] = 0x66; /* reg. SYNT1 (0x07) */
-    tmp[2] = 0x66; /* reg. SYNT0 (0x08) */
-    tmp[3] = 0x2F; /* reg. IF_OFFSET_ANA (0x09) */
-    tmp[4] = 0xC2; /* reg. IF_OFFSET_DIG (0x0A) */
-    S2LPSpiWriteRegisters(fd_SPI, 0x06, 5, tmp);
-    tmp[0] = 0x92; /* reg. MOD4 (0x0E) */
-    tmp[1] = 0xA5; /* reg. MOD3 (0x0F) */
-    tmp[2] = 0x27; /* reg. MOD2 (0x10) */
-    S2LPSpiWriteRegisters(fd_SPI, 0x0E, 3, tmp);
-    tmp[0] = 0xA3; /* reg. MOD0 (0x12) */
-    tmp[1] = 0x13; /* reg. CHFLT (0x13) */
-    S2LPSpiWriteRegisters(fd_SPI, 0x12, 2, tmp);
-    tmp[0] = 0x55; /* reg. ANT_SELECT_CONF (0x1F) */
-    S2LPSpiWriteRegisters(fd_SPI, 0x1F, 1, tmp);
-    tmp[0] = 0x00; /* reg. PCKTCTRL3 (0x2E) */
-    tmp[1] = 0x01; /* reg. PCKTCTRL2 (0x2F) */
-    tmp[2] = 0x30; /* reg. PCKTCTRL1 (0x30) */
-    S2LPSpiWriteRegisters(fd_SPI, 0x2E, 3, tmp);
-    tmp[0] = 0x01; /* reg. PROTOCOL1 (0x3A) */
-    S2LPSpiWriteRegisters(fd_SPI, 0x3A, 1, tmp);
-    tmp[0] = 0x40; /* reg. FIFO_CONFIG3 (0x3C) */
-    tmp[1] = 0x40; /* reg. FIFO_CONFIG2 (0x3D) */
-    tmp[2] = 0x40; /* reg. FIFO_CONFIG1 (0x3E) */
-    tmp[3] = 0x40; /* reg. FIFO_CONFIG0 (0x3F) */
-    tmp[4] = 0x41; /* reg. PCKT_FLT_OPTIONS (0x40) */
-    S2LPSpiWriteRegisters(fd_SPI, 0x3C, 5, tmp);
-    tmp[0] = 0x18; /* reg. PA_POWER8 (0x5A) */
-    S2LPSpiWriteRegisters(fd_SPI, 0x5A, 1, tmp);
-    tmp[0] = 0x07; /* reg. PA_POWER0 (0x62) */
-    tmp[1] = 0x01; /* reg. PA_CONFIG1 (0x63) */
-    S2LPSpiWriteRegisters(fd_SPI, 0x62, 2, tmp);
+ tmp[0] = 0x33; /* reg. SYNT2 (0x06) */
+  tmp[1] = 0x13; /* reg. SYNT1 (0x07) */
+  tmp[2] = 0xB1; /* reg. SYNT0 (0x08) */
+  tmp[3] = 0x29; /* reg. IF_OFFSET_ANA (0x09) */
+  tmp[4] = 0xB7; /* reg. IF_OFFSET_DIG (0x0A) */
+  S2LPSpiWriteRegisters(fd_SPI, 0x06, 5, tmp);
+  tmp[0] = 0x27; /* reg. MOD2 (0x10) */
+  S2LPSpiWriteRegisters(fd_SPI, 0x10, 1, tmp);
+  tmp[0] = 0x55; /* reg. ANT_SELECT_CONF (0x1F) */
+  tmp[1] = 0x00; /* reg. CLOCKREC2 (0x20) */
+  S2LPSpiWriteRegisters(fd_SPI, 0x1F, 2, tmp);
+  tmp[0] = 0x00; /* reg. PCKTCTRL3 (0x2E) */
+  tmp[1] = 0x01; /* reg. PCKTCTRL2 (0x2F) */
+  tmp[2] = 0x30; /* reg. PCKTCTRL1 (0x30) */
+  S2LPSpiWriteRegisters(fd_SPI, 0x2E, 3, tmp);
+  tmp[0] = 0x01; /* reg. PROTOCOL1 (0x3A) */
+  S2LPSpiWriteRegisters(fd_SPI, 0x3A, 1, tmp);
+  tmp[0] = 0x41; /* reg. PCKT_FLT_OPTIONS (0x40) */
+  S2LPSpiWriteRegisters(fd_SPI, 0x40, 1, tmp);
+  tmp[0] = 0x4C; /* reg. CSMA_CONFIG3 (0x4C) */
+  S2LPSpiWriteRegisters(fd_SPI, 0x4C, 1, tmp);
+  tmp[0] = 0x18; /* reg. PA_POWER8 (0x5A) */
+  S2LPSpiWriteRegisters(fd_SPI, 0x5A, 1, tmp);
+  tmp[0] = 0x07; /* reg. PA_POWER0 (0x62) */
+  tmp[1] = 0x01; /* reg. PA_CONFIG1 (0x63) */
+  S2LPSpiWriteRegisters(fd_SPI, 0x62, 2, tmp);
         // END IMPORTED
 
     uint8_t spiBufTx[7] = {0x01, 0x30, 0xFF, 0xFF, 0xBB, 0xCC, 0xAA};
