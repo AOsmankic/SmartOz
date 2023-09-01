@@ -14,6 +14,7 @@
 
 #include "rpi_spi.h"
 #include "s2lp_spi.h"
+#include "s2lp.h"
 
 static uint8_t mode;
 static uint8_t bits = 8;
@@ -84,17 +85,36 @@ int main(int argc, char *argv[]) {
     // s2lp_command(fd_SPI, S2LP_CMD_TX);
     usleep(100*1000);
     printf("TX FIFO Size: %d\n", s2lp_txfifo_count(fd_SPI));
-    s2lp_command(fd_SPI, S2LP_CMD_FLUSHTXFIFO);
+    // s2lp_command(fd_SPI, S2LP_CMD_FLUSHTXFIFO);
     usleep(5*1000*1000);
 
-    while (iter < 500) {
-        while (s2lp_txfifo_count(fd_SPI) != 0);
-        s2lp_writefifo(fd_SPI, fifodata, fifodatalength);
-        printf("Pre-TX FIFO Size: %d\n", s2lp_txfifo_count(fd_SPI));
-        s2lp_command(fd_SPI, S2LP_CMD_TX);
-        usleep(300*1000);
-        printf("Post-TX FIFO Size: %d\n", s2lp_txfifo_count(fd_SPI));
-        printf("Iteration: %d\n", iter++);
+    // while (iter < 500) {
+    //     while (s2lp_txfifo_count(fd_SPI) != 0);
+    //     s2lp_writefifo(fd_SPI, fifodata, fifodatalength);
+    //     printf("Pre-TX FIFO Size: %d\n", s2lp_txfifo_count(fd_SPI));
+    //     s2lp_command(fd_SPI, S2LP_CMD_TX);
+    //     usleep(300*1000);
+    //     printf("Post-TX FIFO Size: %d\n", s2lp_txfifo_count(fd_SPI));
+    //     printf("Iteration: %d\n", iter++);
+    // }
+
+    int testCnt = 20;
+    for (int i = 1; i <= testCnt; i++) {
+        s2lp_command(fd_SPI, S2LP_CMD_FLUSHTXFIFO);
+
+        int size = snprintf(NULL, 0, "Test packet %d of %d", i, testCnt);
+        char *msg = malloc(size + 1);
+        sprintf(msg, "Test packet %d of %d", i, testCnt);
+        
+        s2lp_packet_t tx_packet;
+        tx_packet.payload = msg;
+        tx_packet.payload_length = sizeof(msg) / sizeof(msg[0]);
+
+        s2lp_tx_packet(fd_SPI, &tx_packet);
+
+        printf("%s\n", msg);
+
+        usleep(1*1000*1000);
     }
 
 

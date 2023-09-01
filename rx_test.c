@@ -16,6 +16,7 @@
 #include "s2lp_spi.h"
 #include "rpi_gpio.h"
 #include "s2lp_gpio.h"
+#include "s2lp.h"
 
 static uint8_t mode;
 static uint8_t bits = 8;
@@ -106,13 +107,20 @@ int main(int argc, char *argv[]) {
   tmp[1] = 0x01; /* reg. PA_CONFIG1 (0x63) */
   S2LPSpiWriteRegisters(fd_SPI, 0x62, 2, tmp);
 
+// Configure for var length transmissions
+// s2lp_writereg(fd_SPI, 0x2F, , 1);
+// tmp[0] = 24;
+// s2lp_writereg(fd_SPI, 0x32, tmp, 1);
+// tmp[0] = 0;
+//     s2lp_writereg(fd_SPI, 0x31, tmp, 1);
+
   // Configure GPIO0 to be nIRQ output
     uint8_t data[] = {(0x00 << 3) | 0b10};
     printf("Writing %d to GPIO0CONF.\n", data[0]);
   s2lp_writereg(fd_SPI, S2LP_GPIO0_CONF_ADDR, data, 1);
 
-  // Configure IRQ_MASK0 for data ready interrupts
-    uint8_t data2[] = {0x01};
+  // Configure IRQ_MASK0 for data ready interrupts and RX under/overflows
+    uint8_t data2[] = {0x41};
     printf("Writing to IRQMASK0.\n");
     s2lp_writereg(fd_SPI, 0x53, data2, 1);
     
@@ -128,50 +136,44 @@ int main(int argc, char *argv[]) {
 
     int firstRun = 1;
     while (1) {
-        if (gpio_read(fd_GPIO, S2LP_GPIO0) == 0) {
-            // An interrupt was thrown. Print the value of IRQ_STATUS0.
-            printf("IRQ_STATUS0 = 0d%d\n", s2lp_readreg(fd_SPI, 0xFD));
-            printf("The RX FIFO Size is = %d\n", s2lp_rxfifo_count(fd_SPI));
+        // printf("Current device mode: %d\n", s2lp_readreg(fd_SPI, 0x8E) >> 1);
 
-            uint16_t packet_length = 0;
-            packet_length |= s2lp_readreg(fd_SPI, 0xA4) << 8;
-            packet_length |= s2lp_readreg(fd_SPI, 0xA5); 
-            printf("The RX message length is = %d\n", packet_length);
-            char rxMsg[s2lp_rxfifo_count(fd_SPI)];
-            for (int i = 0; i < s2lp_rxfifo_count(fd_SPI); i++) {
-                rxMsg[i] = s2lp_readfifo(fd_SPI);
-            }
-            printf("The data in the RX FIFO is: \"%s\"\n", rxMsg);
-            printf("IRQ_STATUS0 = 0d%d\n", s2lp_readreg(fd_SPI, 0xFD));
-        }
+        // Make a packet
+        s2lp_packet_t rx_packet;
+        rx_packet.irq_gpio_fd = fd_GPIO;
+        rx_packet.irq_gpio_num = S2LP_GPIO0;
+        rx_packet.variable_length = 1;
+        uint8_t data[128];
+        rx_packet.payload = data;
+
+        // Receive packet
+        s2lp_rx_packet(fd_SPI, &rx_packet);
+
+        // Print the RSSI and payload.
+        printf("Packet Length: %d\n", rx_packet.payload_length);
+        printf("RSSI: %d dBm\n", rx_packet.rssi_dbm);
+        printf("Payload: %s\n", rx_packet.payload);
+
         // if (gpio_read(fd_GPIO, S2LP_GPIO0) == 0) {
-        //     printf("GPIO0 is interrupted. The amount of data contained within RX FIFO is: %d. The amount contained within TX FIFO is: %d.\n\n", s2lp_rxfifo_count(fd_SPI), s2lp_txfifo_count(fd_SPI));
-        //     printf("Clearing the RX FIFO.. ");
-        //     for (int i = 0; i < s2lp_rxfifo_count(fd_SPI); i++) {
-        //         s2lp_readfifo(fd_SPI);
-        //     }
-            
-        //     printf("Cleared.\n");
+        //     // if (s2lp_readreg(fd_SPI, 0xFD) == 1) {
+        //     // An interrupt was thrown. Print the value of IRQ_STATUS0.
+        //     printf("IRQ_STATUS0 = 0d%d\n", s2lp_readreg(fd_SPI, 0xFD));
+        //     printf("The RX FIFO Size is = %d\n", s2lp_rxfifo_count(fd_SPI));
 
-        // } else {
-        //     if (s2lp_rxfifo_count(fd_SPI) != 0 && firstRun) {
-        //         printf("Cnt: %d\n", s2lp_rxfifo_count(fd_SPI));
-        //     //     for (int i = 0; i < s2lp_rxfifo_count(fd_SPI); i++) {
-        //     //     s2lp_readfifo(fd_SPI);
-        //     // }
-        //     }
-        //     // printf("NOT ONE NOT ONE NOT ONE!!\n");
-        // }
-        // firstRun = 0;
-        // if (s2lp_rxfifo_count(fd_SPI) != 0) {
-        //     printf("RX FIFO is non-zero. Size: %d", s2lp_rxfifo_count(fd_SPI));
+        //     uint16_t packet_length = 0;
+        //     packet_length |= s2lp_readreg(fd_SPI, 0xA4) << 8;
+        //     packet_length |= s2lp_readreg(fd_SPI, 0xA5); 
+        //     printf("The RX message length is = %d\n", packet_length);
         //     char rxMsg[s2lp_rxfifo_count(fd_SPI)];
-        //     for (int i = 0; i < s2lp_rxfifo_count(fd_SPI); i++) {
+        //     for (int i = 0; i < packet_length; i++) {
         //         rxMsg[i] = s2lp_readfifo(fd_SPI);
         //     }
-        //     printf("Received message: %s. After reading from FIFO, size is: %d\n", rxMsg, s2lp_rxfifo_count(fd_SPI));
+        //     printf("RSSI: %d dBm\n", s2lp_readreg(fd_SPI, 0xA2) - 146);
+        //     printf("The data in the RX FIFO is: \"%s\"\n", rxMsg);
+        //     printf("IRQ_STATUS0 = 0d%d\n", s2lp_readreg(fd_SPI, 0xFD));
+        //     s2lp_command(fd_SPI, S2LP_CMD_RX);
         // }
-        // printf("RX FIFO Size: %d\n", s2lp_rxfifo_count(fd_SPI));
+        
     }
 
 
