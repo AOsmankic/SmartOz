@@ -37,7 +37,7 @@ void s2lp_rx_packet(int fd, s2lp_packet_t *packet) {
     // If the packet should be variable length, set the S2LP accordingly.
     uint8_t pckt_ctrl = s2lp_readreg(fd, S2LP_PCKT_CTRL_2_REG);
     pckt_ctrl = pckt_ctrl | (packet->variable_length & 0x01);
-    printf("Is the packet variable length? %d\n", s2lp_readreg(fd, S2LP_PCKT_CTRL_2_REG) & 0x01);
+    // printf("Is the packet variable length? %d\n", s2lp_readreg(fd, S2LP_PCKT_CTRL_2_REG) & 0x01);
     s2lp_writereg(fd, S2LP_PCKT_CTRL_2_REG, &pckt_ctrl, 1);
 
     // // If fixed length, set the desired payload length
@@ -46,8 +46,35 @@ void s2lp_rx_packet(int fd, s2lp_packet_t *packet) {
     // }
 
     // Place the transceiver into receive mode
+    uint8_t tmp;
+    tmp = 0xFF; //C
+    s2lp_writereg(fd, 0x46, &tmp, 1);
+    tmp = 0xFF; //P
+    s2lp_writereg(fd, 0x47, &tmp, 1);
+
+    // printf("Before entering RX, IRQSTATUS0 is: 0x%0X\n", s2lp_readreg(fd, S2LP_IRQ_STATUS_0));
+    // printf("Before entering RX, IRQSTATUS3 is: 0x%0X\n", s2lp_readreg(fd, S2LP_IRQ_STATUS_3));
    s2lp_command(fd, S2LP_CMD_RX);
 
+   tmp = 0x1; //C
+    s2lp_writereg(fd, 0x46, &tmp, 1);
+    tmp = 0xFF; //P
+    s2lp_writereg(fd, 0x47, &tmp, 1);
+
+    // printf("Prescaler: %d\n", s2lp_readreg(fd, 0x47));
+    // printf("Counter: %d\n", s2lp_readreg(fd, 0x46));
+    // printf("Prescaler: %d\n", s2lp_readreg(fd, 0x47));
+    // printf("Counter: %d\n", s2lp_readreg(fd, 0x46));
+    // printf("Prescaler: %d\n", s2lp_readreg(fd, 0x47));
+    // printf("Counter: %d\n", s2lp_readreg(fd, 0x46));
+    // printf("Prescaler: %d\n", s2lp_readreg(fd, 0x47));
+    // printf("Counter: %d\n", s2lp_readreg(fd, 0x46));
+    // printf("Prescaler: %d\n", s2lp_readreg(fd, 0x47));
+    // printf("Counter: %d\n", s2lp_readreg(fd, 0x46));
+    // printf("Prescaler: %d\n", s2lp_readreg(fd, 0x47));
+    // printf("Counter: %d\n", s2lp_readreg(fd, 0x46));
+    // printf("Prescaler: %d\n", s2lp_readreg(fd, 0x47));
+    // printf("Counter: %d\n", s2lp_readreg(fd, 0x46));
 //    //  If an interrupt gpio pin has been defined, poll it. Else, poll the IRQ over SPI
 //    if (packet.irq_gpio_fd != -1 && packet.irq_gpio_num != -1) {
 //     while (1) {
@@ -65,7 +92,14 @@ void s2lp_rx_packet(int fd, s2lp_packet_t *packet) {
     // Poll the IRQ_STATUS_0 register to see if a message has been received
     uint8_t received_packet = 0;
     while (!received_packet) {
-        if (s2lp_get_irq(fd, S2LP_IRQ_STATUS_0, S2LP_IRQ_0_MASK_RX_DATA_READY)) {
+        uint8_t rx_data_ready_irq = s2lp_get_irq(fd, S2LP_IRQ_STATUS_0, S2LP_IRQ_0_MASK_RX_DATA_READY);
+        uint8_t rx_timer_timeout_irq = s2lp_get_irq(fd, S2LP_IRQ_STATUS_3, S2LP_IRQ_3_MASK_RX_TIMER_TIMEOUT);
+
+
+        // printf("After exiting RX, IRQSTATUS0 is: 0x%0X\n", rx_data_ready_irq);
+        // printf("After exiting RX, IRQSTATUS3 is: 0x%0X\n", rx_timer_timeout_irq);
+
+        if (rx_data_ready_irq) {
             // A packet was received. Stop polling.
             received_packet = 1;
 
@@ -87,6 +121,9 @@ void s2lp_rx_packet(int fd, s2lp_packet_t *packet) {
             // Get the RSSI in dBm
             uint8_t rssi_raw = s2lp_readreg(fd, S2LP_RSSI_LEVEL_REG);
             packet->rssi_dbm = rssi_raw - 146;
+        } else if (rx_timer_timeout_irq) {
+            // printf("Timeout.\n");
+            received_packet = 1;
         }
         
     }

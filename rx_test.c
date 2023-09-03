@@ -107,6 +107,12 @@ int main(int argc, char *argv[]) {
   tmp[1] = 0x01; /* reg. PA_CONFIG1 (0x63) */
   S2LPSpiWriteRegisters(fd_SPI, 0x62, 2, tmp);
 
+
+// Configure rx timer to P=4, C=1
+    tmp[0] = 0xFF; //C
+    s2lp_writereg(fd_SPI, 0x46, tmp, 1);
+    tmp[0] = 0xFF; //P
+    s2lp_writereg(fd_SPI, 0x47, tmp, 1);
 // Configure for var length transmissions
 // s2lp_writereg(fd_SPI, 0x2F, , 1);
 // tmp[0] = 24;
@@ -123,6 +129,11 @@ int main(int argc, char *argv[]) {
     uint8_t data2[] = {0x41};
     printf("Writing to IRQMASK0.\n");
     s2lp_writereg(fd_SPI, 0x53, data2, 1);
+
+    // Configure IRQ_MASK3 for timer timeouts
+    // uint8_t data3 = {0x01};
+    // printf("Writing to IRQMASK3.\n");
+    // s2lp_writereg(fd_SPI, 0x50, &data3, 1);
     
     
     printf("RX FIFO Size Pre-Flush: %d\n", s2lp_rxfifo_count(fd_SPI));
@@ -146,14 +157,18 @@ int main(int argc, char *argv[]) {
         uint8_t data[128];
         rx_packet.payload = data;
 
-        printf("Current State: 0x%X\n", s2lp_readreg(fd_SPI, 0x8E) >> 1);
+        // printf("Current State: 0x%X\n", s2lp_readreg(fd_SPI, 0x8E) >> 1);
         // Receive packet
+        rx_packet.payload_length = 0;
         s2lp_rx_packet(fd_SPI, &rx_packet);
 
-        // Print the RSSI and payload.
+        if (rx_packet.payload_length != 0) {
+          // Print the RSSI and payload.
         printf("Packet Length: %d\n", rx_packet.payload_length);
         printf("RSSI: %d dBm\n", rx_packet.rssi_dbm);
         printf("Payload: %s\n", rx_packet.payload);
+        }
+        
 
         // if (gpio_read(fd_GPIO, S2LP_GPIO0) == 0) {
         //     // if (s2lp_readreg(fd_SPI, 0xFD) == 1) {
